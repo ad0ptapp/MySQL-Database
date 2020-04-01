@@ -1,9 +1,9 @@
 -- phpMyAdmin SQL Dump
--- version 5.0.1
+-- version 4.9.2
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 04, 2020 at 04:42 AM
+-- Generation Time: Apr 01, 2020 at 10:31 PM
 -- Server version: 10.4.11-MariaDB
 -- PHP Version: 7.4.1
 
@@ -29,11 +29,15 @@ SET time_zone = "+00:00";
 --
 
 CREATE TABLE `animals` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `current_owner` int(10) UNSIGNED DEFAULT NULL,
-  `names` text NOT NULL,
-  `profile_photo` varchar(512) NOT NULL,
-  `records` varchar(1024) NOT NULL
+  `animal_id` int(10) UNSIGNED NOT NULL,
+  `owner_id` int(10) UNSIGNED NOT NULL,
+  `species` tinytext NOT NULL,
+  `age` smallint(5) UNSIGNED NOT NULL COMMENT 'months',
+  `name` tinytext NOT NULL,
+  `breed` tinytext NOT NULL,
+  `weight` smallint(5) UNSIGNED NOT NULL COMMENT 'grams',
+  `registered` date NOT NULL DEFAULT current_timestamp(),
+  `gender` tinyint(4) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
@@ -43,11 +47,10 @@ CREATE TABLE `animals` (
 --
 
 CREATE TABLE `posts` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `poster_id` int(10) UNSIGNED NOT NULL,
+  `post_id` int(10) UNSIGNED NOT NULL,
+  `owner_id` int(10) UNSIGNED NOT NULL,
   `animal_id` int(10) UNSIGNED NOT NULL,
-  `datetime` datetime NOT NULL DEFAULT current_timestamp(),
-  `data` blob NOT NULL
+  `body` text NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
@@ -57,10 +60,32 @@ CREATE TABLE `posts` (
 --
 
 CREATE TABLE `users` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `username` varchar(32) NOT NULL,
-  `password` varchar(255) NOT NULL,
-  `email` varchar(320) NOT NULL
+  `user_id` int(10) UNSIGNED NOT NULL,
+  `email` varchar(320) NOT NULL,
+  `password` tinytext NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+--
+-- Dumping data for table `users`
+--
+
+INSERT INTO `users` (`user_id`, `email`, `password`) VALUES
+(1, 'test', 'asdf');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_info`
+--
+
+CREATE TABLE `user_info` (
+  `user_id` int(10) UNSIGNED NOT NULL,
+  `full_name` int(11) NOT NULL,
+  `country` tinytext NOT NULL,
+  `state` tinytext NOT NULL,
+  `city` tinytext NOT NULL,
+  `postcode` tinytext NOT NULL,
+  `phone_number` tinytext NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 --
@@ -71,22 +96,30 @@ CREATE TABLE `users` (
 -- Indexes for table `animals`
 --
 ALTER TABLE `animals`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `current_owner` (`current_owner`);
+  ADD PRIMARY KEY (`animal_id`),
+  ADD KEY `name` (`name`(255)),
+  ADD KEY `owner_id` (`owner_id`);
 
 --
 -- Indexes for table `posts`
 --
 ALTER TABLE `posts`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `poster_id` (`poster_id`),
-  ADD KEY `animal_id` (`animal_id`);
+  ADD PRIMARY KEY (`post_id`),
+  ADD KEY `animal_id` (`animal_id`,`owner_id`),
+  ADD KEY `owner_id` (`owner_id`);
 
 --
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`user_id`);
+
+--
+-- Indexes for table `user_info`
+--
+ALTER TABLE `user_info`
+  ADD KEY `postcode` (`postcode`(255)),
+  ADD KEY `user_info_ibfk_1` (`user_id`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -96,19 +129,19 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `animals`
 --
 ALTER TABLE `animals`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `animal_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `posts`
 --
 ALTER TABLE `posts`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `post_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `user_id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- Constraints for dumped tables
@@ -118,14 +151,20 @@ ALTER TABLE `users`
 -- Constraints for table `animals`
 --
 ALTER TABLE `animals`
-  ADD CONSTRAINT `owner_id` FOREIGN KEY (`current_owner`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE NO ACTION;
+  ADD CONSTRAINT `animals_ibfk_1` FOREIGN KEY (`owner_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `posts`
 --
 ALTER TABLE `posts`
-  ADD CONSTRAINT `animal` FOREIGN KEY (`animal_id`) REFERENCES `animals` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION,
-  ADD CONSTRAINT `user` FOREIGN KEY (`poster_id`) REFERENCES `users` (`id`) ON UPDATE NO ACTION;
+  ADD CONSTRAINT `posts_ibfk_1` FOREIGN KEY (`owner_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `posts_ibfk_2` FOREIGN KEY (`animal_id`) REFERENCES `animals` (`animal_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `user_info`
+--
+ALTER TABLE `user_info`
+  ADD CONSTRAINT `user_info_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
